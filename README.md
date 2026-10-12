@@ -5,9 +5,16 @@ personal repos by default, one button away from your organizations, and a
 third tab that browses the repos themselves.
 
 ```
-󰊤 7        the bar: the GitHub mark, the count in the current scope,
+7 󰊤        the bar: the count in the current scope beside the GitHub mark,
            urgent when something is assigned to you or awaiting your review
 ```
+
+The count sits on the label side of the mark, the way every other icon-plus-text
+widget in the bar reads (`48% 🔋`), because the mark and the count go through
+two different sizes: the mark is the icon, fitted to `Style.bar.iconSize`, and
+the count is the shell's `labelText`, drawn at `Style.bar.iconFont`. Both packed
+into one glyph string, the bar fits the whole string into the icon box and
+shrinks mark and digits together to about half height.
 
 Click it and the panel lists what needs you: each row is the issue or pull
 request title with the repo it lives in underneath, and nothing else. Issues
@@ -115,8 +122,9 @@ Bind either to a hotkey and it behaves like a click on the bar icon.
   good answer in `~/.local/state/omarchy/github-oma/cache.json`, and owns the
   scope/tab state. One poller for the whole shell, so a multi-monitor bar does
   not shell out once per screen.
-- `BarWidget.qml` — the bar mark, the count, and the click target. Reads the
-  service through the bar's scoped facade.
+- `BarWidget.qml` — the bar mark, the count beside it, and the click target.
+  Reads the service through the bar's scoped facade, and sizes its slot from the
+  measured count so the label is never clipped.
 - `Panel.qml` — layout, the two chip rows, the list, and the keyboard cursor.
 - `GithubModel.js` — the shaping: merging scopes, sorting, relative times,
   label colors, failure notices. Unit-tested headlessly.
@@ -150,9 +158,13 @@ omarchy plugin validate .    # manifest and entry points
 
 ## Development
 
-Saving `BarWidget.qml` or `Panel.qml` hot-reloads them inside the running
-shell. `Service.qml` and `GithubModel.js` do not: the shell keeps the mounted
-service instance and caches imported JS libraries, so apply those with
+Saving `Panel.qml` is picked up the next time the panel opens: the panel is
+instantiated on open, so it reads the new file.
+
+`BarWidget.qml`, `Service.qml`, and `GithubModel.js` are not: the bar keeps the
+widget instance it built at startup (a rescan or a cleared `qmlcache` does not
+rebuild it — measured on shell 4.0.0.alpha), and the shell keeps the mounted
+service instance and caches imported JS libraries. Apply those with
 
 ```sh
 omarchy-restart-shell            # or: omarchy plugin disable/enable tenzin.github-oma

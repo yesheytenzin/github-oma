@@ -126,7 +126,9 @@ github-oma/
 - Nerd Font glyph `󰊤` (`nf-md-github`, U+F02A4 — verified present via
   `fc-list ':charset=f02a4'`), plus a small count of items in the selected
   scope when > 0; `Color.urgent` when any row needs attention (assigned to you
-  or review requested).
+  or review requested). The mark is `text` and the count is `labelText`: the
+  bar fits `text` to `Style.bar.iconSize`, so a mark-plus-count string would be
+  squeezed to the icon box and paint at half height.
 - `onPressed` toggles the panel; middle-click refreshes (matches `limon.todo`
   and omodoro).
 - Exposes `opened` / `open()` / `close()` on the root — the shape the host's

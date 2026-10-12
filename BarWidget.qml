@@ -20,12 +20,36 @@ BarWidget {
   readonly property bool attention: root.service ? root.service.attentionCount > 0 : false
 
   // nf-md-github, verified in the configured Nerd Font. A bar widget with
-  // empty text paints nothing at all, so the glyph is always present and the
-  // count rides beside it.
+  // empty text paints nothing at all, so the glyph is always present.
   readonly property string glyph: "󰊤"
-  readonly property string label: root.badge <= 0
+  readonly property string count: root.badge <= 0
+    ? ""
+    : (root.badge > 99 ? "99+" : String(root.badge))
+
+  readonly property bool vertical: root.bar ? root.bar.vertical === true : false
+
+  // The mark goes through `text` and the count through `labelText`. Both in
+  // `text` would hand one string to the optical fit, which squeezes it to
+  // Style.bar.iconSize: "󰊤 12" scaled down to its width came out at half the
+  // height of every icon beside it. The label is the shell's own path — it
+  // paints at Style.bar.iconFont and keeps its size. A vertical bar has no
+  // room beside the icon, so there the count stays in the glyph string.
+  readonly property bool countBeside: !root.vertical && root.count !== ""
+  // The string `text` paints: the mark alone when the count rides beside it,
+  // the mark and count together when it cannot.
+  readonly property string label: root.count === "" || root.countBeside
     ? root.glyph
-    : root.glyph + " " + (root.badge > 99 ? "99+" : String(root.badge))
+    : root.glyph + " " + root.count
+
+  // The shell lays its label out at Style.bar.iconFont with Style.space(4)
+  // between it and the icon box, and sizes the slot from `slotSize`; the
+  // widget measures its own label to size that slot.
+  TextMetrics {
+    id: countMetrics
+    font.family: root.bar ? root.bar.fontFamily : Style.font.family
+    font.pixelSize: Style.bar.iconFont
+    text: root.count
+  }
 
   readonly property string tooltip: {
     if (!root.service) return "GitHub"
@@ -98,9 +122,14 @@ BarWidget {
     anchors.fill: parent
     bar: root.bar
     text: root.label
-    // A fixed slot would clip "󰊤 12"; letting the label size the slot keeps the
-    // count readable and the bar host lays the neighbours out from it.
-    fixedWidth: -1
+    labelText: root.countBeside ? root.count : ""
+    // One icon slot plus the label the shell draws beside it, so the count is
+    // never clipped and the widget keeps the bar's own margins around its
+    // paint. `fixedWidth: -1` let the shell size the slot from `text` alone,
+    // which knew nothing about the label.
+    slotSize: root.countBeside
+      ? Style.bar.iconSlot + Style.space(4) + Math.ceil(countMetrics.advanceWidth)
+      : Style.bar.iconSlot
     active: root.attention
     tooltipText: root.tooltip
     onPressed: function(pressedButton) {
